@@ -2,7 +2,7 @@
 
 **NAPsack** records and structures your computer use by generating natural language caption from screenshots and input events (click, keypress, scroll, cursor move).
 
-<img alt="napsack_overview" src="https://github.com/user-attachments/assets/dd9ca2c5-288c-4977-8dc9-10ca343e56db" />
+<img width="1808" height="784" alt="github_fig" src="https://github.com/user-attachments/assets/85922c5a-f3c0-40a5-8273-ae9d60214711" />
 
 ---
 # Quickstart
