@@ -9,6 +9,28 @@
 
 > Requires Python 3.11+ and `ffmpeg` for video generation. Use `uv` to run the commands below.
 
+## API Keys
+
+NAPsack uses a VLM to generate captions. Create a `.env` file in the project root (or export variables in your shell):
+
+```shell
+cp .env.example .env
+```
+
+Then fill in the key for your chosen client:
+
+| Client | Variable | Where to get it |
+|--------|----------|-----------------|
+| `gemini` (default) | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) |
+| `vllm` | _(none — pass `--vllm-url`)_ | Self-hosted vLLM server |
+| `bigquery` | _(uses Application Default Credentials)_ | `gcloud auth application-default login` |
+
+For Gemini, your `.env` should contain:
+
+```
+GEMINI_API_KEY=your_key_here
+```
+
 **Record** a session (press CTRL+C to stop)
 ```shell
 uv run -m record --monitor
