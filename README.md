@@ -7,7 +7,15 @@
 ---
 # Quickstart
 
-> Requires Python 3.11+ and `ffmpeg` for video generation. Use `uv` to run the commands below.
+> Requires Python 3.11+ and `ffmpeg` for video generation.
+
+Install NAPsack from PyPI:
+
+```shell
+pip install napsack
+```
+
+Or, if you prefer not to install it, use `uv` to run the module commands shown below.
 
 ## API Keys
 
