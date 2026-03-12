@@ -491,8 +491,7 @@ class Processor:
         file_desc = self.client.upload_file(str(task.video_path.resolve()), session_id=task.session_id)
         response = self.client.generate(task.prompt, file_desc, schema=CAPTION_SCHEMA)
 
-        result = response.json if not callable(response.json) else response.json()
-        return result
+        return response
 
     def _save_chunk_result(self, config: SessionConfig, task: ChunkTask, result: any):
         """Save a single chunk's result immediately after processing."""

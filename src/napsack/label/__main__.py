@@ -117,8 +117,8 @@ def process_with_gemini(args, configs):
 def process_with_vllm(args, configs):
     client = create_client(
         'vllm',
-        base_url=args.vllm_url if args.vllm_url.endswith('/v1') else f"{args.vllm_url}/v1",
-        model_name=args.model
+        api_base=args.vllm_url if args.vllm_url.endswith('/v1') else f"{args.vllm_url}/v1",
+        model_name=args.model,
     )
 
     processor = Processor(

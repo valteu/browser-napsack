@@ -249,6 +249,10 @@ class ScreenRecorder:
         if not self.running:
             return
 
+        # Ignore further Ctrl+C so sanitization can't be interrupted mid-write
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
         print("-------------------------------------------------------------------")
         print(">>>>                    Stopping Recorder                      <<<<")
         print(">>>>             Cleaning Up Remaining Processes...            <<<<")

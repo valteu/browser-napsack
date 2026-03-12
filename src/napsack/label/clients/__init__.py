@@ -1,14 +1,11 @@
 from napsack.label.clients.client import VLMClient, CAPTION_SCHEMA
-from napsack.label.clients.gemini import GeminiClient, GeminiResponse
-from napsack.label.clients.vllm import VLLMClient, VLLMResponse
+from napsack.label.clients.litellm import LiteLLMClient
 from napsack.label.clients.bigquery import BigQueryClient, BigQueryResponse
 
 
 def create_client(client_type: str, **kwargs) -> VLMClient:
-    if client_type == 'gemini':
-        return GeminiClient(**kwargs)
-    elif client_type == 'vllm':
-        return VLLMClient(**kwargs)
+    if client_type in ('gemini', 'litellm', 'vllm'):
+        return LiteLLMClient(**kwargs)
     elif client_type == 'bigquery':
         return BigQueryClient(**kwargs)
     else:
@@ -17,10 +14,7 @@ def create_client(client_type: str, **kwargs) -> VLMClient:
 
 __all__ = [
     "VLMClient",
-    "GeminiClient",
-    "GeminiResponse",
-    "VLLMClient",
-    "VLLMResponse",
+    "LiteLLMClient",
     "BigQueryClient",
     "BigQueryResponse",
     "CAPTION_SCHEMA",

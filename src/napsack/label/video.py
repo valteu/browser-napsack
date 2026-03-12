@@ -320,4 +320,9 @@ def create_video(
 
         cmd.append(str(output_path))
 
-        subprocess.run(cmd, capture_output=True, check=True)
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+        except FileNotFoundError:
+            raise RuntimeError("ffmpeg not found. Install it with: brew install ffmpeg") from None
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"ffmpeg failed (exit {e.returncode}):\n{e.stderr.decode().strip()}") from None
