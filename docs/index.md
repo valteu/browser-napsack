@@ -43,17 +43,17 @@ napsack-record --monitor
 **Label** the recorded session:
 
 ```shell
-# Gemini (default)
-napsack-label --session logs/session_name --model gemini/gemini-2.5-flash
+# Gemini 3 flash preview (default)
+napsack-label --session-dir logs/session_name 
 
 # OpenAI
-napsack-label --session logs/session_name --model openai/gpt-4o
+napsack-label --session-dir logs/session_name --model openai/gpt-4.1-mini
 
 # Anthropic
-napsack-label --session logs/session_name --model anthropic/claude-3-5-sonnet-20241022
+napsack-label --session-dir logs/session_name --model anthropic/claude-sonnet-4-6
 
 # Self-hosted vLLM
-napsack-label --session logs/session_name --model hosted_vllm/Qwen3-VL-8B --api-base http://localhost:8000/v1
+napsack-label --session-dir logs/session_name --model hosted_vllm/Qwen3-VL-8B --api-base http://localhost:8000/v1
 ```
 
 NAPsack uses [litellm](https://github.com/BerriAI/litellm), so any provider litellm supports works out of the box. Set the appropriate API key in your environment:

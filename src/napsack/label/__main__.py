@@ -14,7 +14,7 @@ def parse_args():
     p = argparse.ArgumentParser(description="Process session recordings with VLM")
 
     session_group = p.add_mutually_exclusive_group(required=True)
-    session_group.add_argument("--session", type=Path)
+    session_group.add_argument("--session-dir", type=Path)
     session_group.add_argument("--sessions-root", type=Path)
 
     p.add_argument("--chunk-duration", type=int, default=60, help="Chunk duration in seconds")
@@ -32,12 +32,18 @@ def parse_args():
     p.add_argument("--visualize", action="store_true", help="Create annotated video visualizations after processing")
     p.add_argument("--encode-only", action="store_true", help="Only encode videos (create chunks), skip labeling. Useful for pre-processing before running the full pipeline.")
 
-    p.add_argument("--client", choices=["litellm", "bigquery"], default="litellm")
+    p.add_argument("--client", choices=["litellm", "bigquery", "tinfoil"], default="litellm")
     p.add_argument("--model", default="gemini/gemini-2.5-flash",
                    help="Full litellm model string, e.g. gemini/gemini-2.5-flash, openai/gpt-4o, "
-                        "anthropic/claude-3-5-sonnet-20241022, hosted_vllm/Qwen3-VL-8B")
+                        "anthropic/claude-3-5-sonnet-20241022, hosted_vllm/Qwen3-VL-8B, "
+                        "or a Tinfoil model name e.g. meta-llama/Llama-3.2-11B-Vision-Instruct")
     p.add_argument("--api-base", default=None,
                    help="API base URL for local/custom endpoints (e.g. http://localhost:8000/v1 for vLLM)")
+
+    tinfoil_group = p.add_argument_group("Tinfoil Options")
+    tinfoil_group.add_argument("--tinfoil-enclave", default="", help="Tinfoil enclave address (auto-selected if omitted)")
+    tinfoil_group.add_argument("--tinfoil-repo", default="tinfoilsh/confidential-model-router",
+                               help="GitHub repo used for Tinfoil attestation")
     p.add_argument("--encode-workers", type=int, default=8, help="Number of parallel workers for video encoding")
     p.add_argument("--label-workers", type=int, default=4, help="Number of parallel workers for VLM labeling")
 
@@ -52,6 +58,12 @@ def parse_args():
     if not args.model:
         if args.client == 'bigquery':
             args.model = 'dataset.model'  # Placeholder - user must provide full model reference
+    
+    # gemini, hosted_vllm, and tinfoil support video input; everything else falls back to image mode
+    provider = args.model.split("/")[0] if args.model and "/" in args.model else ""
+    if not args.image_mode and args.client not in ("tinfoil",) and provider not in ("gemini", "hosted_vllm"):
+        args.image_mode = True
+
     if not args.prompt_file:
         if args.image_mode:
             args.prompt_file = "prompts/image_mode.txt"
@@ -64,9 +76,9 @@ def parse_args():
 
 
 def setup_configs(args):
-    if args.session:
+    if args.session_dir:
         configs = [create_single_config(
-            args.session,
+            args.session_dir,
             args.chunk_duration,
             args.screenshots_only,
             tuple(args.image_extensions),
@@ -149,6 +161,34 @@ def process_with_bigquery(args, configs):
     )
 
 
+def process_with_tinfoil(args, configs):
+    client = create_client(
+        'tinfoil',
+        model_name=args.model,
+        enclave=args.tinfoil_enclave,
+        repo=args.tinfoil_repo,
+    )
+
+    processor = Processor(
+        client=client,
+        encode_workers=args.encode_workers,
+        label_workers=args.label_workers,
+        screenshots_only=args.screenshots_only,
+        prompt_file=args.prompt_file,
+        max_time_gap=args.max_time_gap,
+        hash_cache_path=args.hash_cache,
+        dedupe_threshold=args.dedupe_threshold,
+        image_mode=args.image_mode,
+    )
+
+    return processor.process_sessions(
+        configs,
+        fps=args.fps,
+        annotate=args.annotate and not args.screenshots_only,
+        encode_only=args.encode_only,
+    )
+
+
 def main():
     args = parse_args()
 
@@ -162,6 +202,8 @@ def main():
         results = process_with_litellm(args, configs)
     elif args.client == 'bigquery':
         results = process_with_bigquery(args, configs)
+    elif args.client == 'tinfoil':
+        results = process_with_tinfoil(args, configs)
     else:
         raise ValueError(f"Unknown client: {args.client}")
 
