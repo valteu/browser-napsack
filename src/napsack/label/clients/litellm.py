@@ -91,7 +91,7 @@ class LiteLLMClient(VLMClient):
             "data_url": f"data:{mime_type};base64,{b64_data}",
         }
 
-    def upload_images(self, paths: list, session_id: str = None) -> Dict:
+    def upload_images(self, paths: list, session_id: str = None, per_frame_text: list = None) -> Dict:
         """Upload a list of image paths for frame-by-frame image mode (always base64)."""
         frames = []
         for i, path in enumerate(paths):
@@ -99,7 +99,10 @@ class LiteLLMClient(VLMClient):
             mime_type = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
             with open(p, "rb") as f:
                 b64_data = base64.b64encode(f.read()).decode("utf-8")
-            frames.append({"data_url": f"data:{mime_type};base64,{b64_data}", "label": f"Frame {i + 1}"})
+            frame = {"data_url": f"data:{mime_type};base64,{b64_data}", "label": f"Frame {i + 1}"}
+            if per_frame_text and i < len(per_frame_text):
+                frame["events"] = per_frame_text[i]
+            frames.append(frame)
         return {"type": "image_list", "frames": frames}
 
     def generate(
@@ -140,12 +143,14 @@ class LiteLLMClient(VLMClient):
         if not file_desc:
             return [{"role": "user", "content": prompt}]
 
-        # Image-list mode: interleave "Frame N" labels with base64 image blocks
+        # Image-list mode: interleave images with per-frame event text (if provided)
         if isinstance(file_desc, dict) and file_desc.get("type") == "image_list":
             content = []
             for frame in file_desc["frames"]:
                 content.append({"type": "text", "text": frame["label"]})
                 content.append({"type": "image_url", "image_url": {"url": frame["data_url"]}})
+                if frame.get("events"):
+                    content.append({"type": "text", "text": frame["events"]})
             content.append({"type": "text", "text": prompt})
             return [{"role": "user", "content": content}]
 

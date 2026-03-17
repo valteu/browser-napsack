@@ -37,7 +37,7 @@ def split_video(video_path: Path, chunk_duration: int, out_dir: Path, start_inde
 
     with av.open(str(video_path)) as input_container:
         video_stream = input_container.streams.video[0]
-        fps = float(video_stream.average_rate)
+        fps = video_stream.average_rate
 
         for i in range(num_chunks):
             start_s = i * chunk_duration

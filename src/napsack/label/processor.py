@@ -535,8 +535,12 @@ class Processor:
     def _process_single_task(self, task: ChunkTask) -> any:
         """Process single task with schema."""
         if self.image_mode:
+            per_frame_text = None
+            if task.aggregations:
+                per_frame_text = [agg.to_prompt(f"Frame {j + 1}") for j, agg in enumerate(task.aggregations)]
             file_desc = self.client.upload_images(
-                [str(p) for p in task.image_paths], session_id=task.session_id
+                [str(p) for p in task.image_paths], session_id=task.session_id,
+                per_frame_text=per_frame_text,
             )
             response = self.client.generate(task.prompt, file_desc, schema=IMAGE_CAPTION_SCHEMA)
         else:

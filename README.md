@@ -29,10 +29,11 @@ NAPsack uses [litellm](https://github.com/BerriAI/litellm), so pass a full provi
 
 | Provider | `--model` example | API key variable |
 |----------|-------------------|-----------------|
-| Gemini (default) | `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
+| Gemini (default) | `gemini/gemini-3-flash-preview` | `GEMINI_API_KEY` |
 | OpenAI | `openai/gpt-4.1-mini` | `OPENAI_API_KEY` |
 | Anthropic | `anthropic/claude-4.6-sonnet` | `ANTHROPIC_API_KEY` |
 | vLLM (self-hosted) | `hosted_vllm/Qwen3-VL-8B` + `--api-base http://host/v1` | _(none required)_ |
+| Ollama (local) | `ollama/qwen3.5:4b` + `--api-base http://localhost:11434` (replace with yours) | _(none required)_ |
 | Tinfoil (confidential inference) | _(pass `--client tinfoil`)_ | `TINFOIL_API_KEY` |
 | BigQuery | _(pass `--client bigquery`)_ | Application Default Credentials — `gcloud auth application-default login` |
 
@@ -53,7 +54,7 @@ uv run -m napsack.label --session-dir ./logs/session_name
 
 To use Tinfoil, pass `--client tinfoil --model <model>`, e.g.:
 ```shell
-napsack-label --session-dir ./logs/session_name --client tinfoil --model meta-llama/Llama-3.2-11B-Vision-Instruct
+napsack-label --session-dir ./logs/session_name --client tinfoil --model kimi-k2-5
 ```
 
 # Output
@@ -73,8 +74,7 @@ napsack-label --session-dir ./logs/session_name --client tinfoil --model meta-ll
 
 NAPsack groups temporally adjacent input events of the same type into **event bursts**. An event is assigned to the current burst if the time since the preceding event of that type does not exceed the corresponding **gap** threshold and the elapsed time since the burst start remains within the **max** duration.
 * If the **gap** threshold is exceeded, a new burst is started.
-* If the **max** duration is exceeded, the first half of the current burst is finalized and saved, while the second half becomes the active burst.
-A burst is force-restarted when the active monitor changes.
+* If the **max** duration is exceeded, the first half of the current burst is finalized and saved, while the second half becomes the active burst. A burst is force-restarted when the active monitor changes.
 
 ## Label
 
@@ -87,4 +87,18 @@ The `label` module:
 
 The label step performs a second layer of aggregation: it uses the bursts detected at recording time and further refines and annotates them with VLM outputs to create final human-readable summaries.
 
+# Citation
 
+If you use NAPsack in your research, please cite:
+
+```bibtex
+@misc{shaikh2026learningactionpredictorshumancomputer,
+      title={Learning Next Action Predictors from Human-Computer Interaction},
+      author={Omar Shaikh and Valentin Teutschbein and Kanishk Gandhi and Yikun Chi and Nick Haber and Thomas Robinson and Nilam Ram and Byron Reeves and Sherry Yang and Michael S. Bernstein and Diyi Yang},
+      year={2026},
+      eprint={2603.05923},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2603.05923},
+}
+```

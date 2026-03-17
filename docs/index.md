@@ -74,6 +74,7 @@ NAPsack uses [litellm](https://github.com/BerriAI/litellm), so any provider lite
 | OpenAI | `openai/gpt-4.1-mini` | `OPENAI_API_KEY` |
 | Anthropic | `anthropic/claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
 | vLLM (self-hosted) | `hosted_vllm/Qwen3-VL-8B` + `--api-base http://host/v1` | _(none required)_ |
+| Ollama (local) | `ollama/llama3` + `--api-base http://localhost:11434` | _(none required)_ |
 | Tinfoil (confidential inference) | _(pass `--client tinfoil`)_ | `TINFOIL_API_KEY` |
 | [BigQuery](bigquery.md) | _(pass `--client bigquery`)_ | Application Default Credentials — `gcloud auth application-default login` |
 
@@ -115,3 +116,19 @@ The `label` module:
 - Optionally renders an annotated video (`annotated.mp4`) showing captions and event visualizations overlaid on frames.
 
 The label step performs a second layer of aggregation: it uses the bursts detected at recording time and further refines and annotates them with VLM outputs to create final human-readable summaries.
+
+## Citation
+
+If you use NAPsack in your research, please cite:
+
+```bibtex
+@misc{shaikh2026learningactionpredictorshumancomputer,
+      title={Learning Next Action Predictors from Human-Computer Interaction},
+      author={Omar Shaikh and Valentin Teutschbein and Kanishk Gandhi and Yikun Chi and Nick Haber and Thomas Robinson and Nilam Ram and Byron Reeves and Sherry Yang and Michael S. Bernstein and Diyi Yang},
+      year={2026},
+      eprint={2603.05923},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2603.05923},
+}
+```

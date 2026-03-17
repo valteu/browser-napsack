@@ -35,7 +35,7 @@ class VLMClient(ABC):
         pass
 
     @abstractmethod
-    def upload_images(self, paths: List[str], session_id: str = None) -> Any:
+    def upload_images(self, paths: List[str], session_id: str = None, per_frame_text: List[str] = None) -> Any:
         pass
 
     @abstractmethod

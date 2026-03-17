@@ -116,7 +116,7 @@ class BigQueryClient(VLMClient):
 
         return gcs_uri
 
-    def upload_images(self, paths: list, session_id: str = None) -> Any:
+    def upload_images(self, paths: list, session_id: str = None, per_frame_text: list = None) -> Any:
         raise NotImplementedError("BigQueryClient does not support image-mode")
 
     def generate(
