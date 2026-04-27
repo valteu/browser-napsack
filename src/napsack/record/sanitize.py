@@ -93,6 +93,10 @@ def sanitize_aggregations(input_file: Path):
     Sanitize aggregations.jsonl by properly aligning screenshot timestamps
     and redistributing ALL events to their correct time windows.
     """
+    if not input_file.exists():
+        print(f"Aggregation file not found: {input_file}, skipping sanitization.")
+        return
+
     # move filename to filename_raw
     output_file = input_file.parent / "aggregations.jsonl"
 

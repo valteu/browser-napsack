@@ -125,7 +125,9 @@ class AggregationWorker:
                 'cursor_position': aggregation.events[0].get('cursor_position') if aggregation.events else None,
                 'monitor': aggregation.request.monitor,
                 'burst_id': aggregation.request.burst_id,
-                'scale_factor': aggregation.request.scale_factor
+                'scale_factor': aggregation.request.scale_factor,
+                'active_window': getattr(aggregation.request.screenshot, 'active_window', None) if aggregation.request.screenshot else None,
+                'is_browser': getattr(aggregation.request.screenshot, 'is_browser', False) if aggregation.request.screenshot else False
             }
 
             with open(self.aggregations_file, 'a') as f:

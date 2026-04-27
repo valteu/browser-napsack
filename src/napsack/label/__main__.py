@@ -34,7 +34,7 @@ def parse_args():
     p.add_argument("--encode-only", action="store_true", help="Only encode videos (create chunks), skip labeling. Useful for pre-processing before running the full pipeline.")
 
     p.add_argument("--client", choices=["litellm", "bigquery", "tinfoil"], default="litellm")
-    p.add_argument("--model", default="gemini/gemini-2.5-flash",
+    p.add_argument("--model", default="gemini/gemini-3-flash-preview",
                    help="Full litellm model string, e.g. gemini/gemini-2.5-flash, openai/gpt-4o, "
                         "anthropic/claude-3-5-sonnet-20241022, hosted_vllm/Qwen3-VL-8B, "
                         "or a Tinfoil model name e.g. meta-llama/Llama-3.2-11B-Vision-Instruct")
@@ -59,7 +59,7 @@ def parse_args():
     if not args.model:
         if args.client == 'bigquery':
             args.model = 'dataset.model'  # Placeholder - user must provide full model reference
-    
+
     # gemini, hosted_vllm, and tinfoil support video input; everything else falls back to image mode
     provider = args.model.split("/")[0] if args.model and "/" in args.model else ""
     if not args.image_mode and args.client not in ("tinfoil",) and provider not in ("gemini", "hosted_vllm"):

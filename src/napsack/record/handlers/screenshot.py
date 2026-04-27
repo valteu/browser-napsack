@@ -6,6 +6,7 @@ import mss
 from napsack.record.models.event_queue import EventQueue
 from napsack.record.models.image import BufferImage
 from napsack.record.workers.screenshot import capture_screenshot
+from napsack.record.handlers.window import get_active_window_title, is_browser
 
 
 class ScreenshotHandler:
@@ -40,6 +41,23 @@ class ScreenshotHandler:
         self._previous_image: Optional[BufferImage] = None
         self.mouse_controller = mouse.Controller()
 
+        self._last_window_title = ""
+        self._last_window_class = ""
+        self._last_window_time = 0.0
+
+    def _get_window_info(self) -> tuple[str, bool]:
+        now = time.time()
+        # Rate limit to checking at most once per second
+        if now - self._last_window_time > 1.0:
+            title, app_class, pid = get_active_window_title()
+            self._last_window_title = title
+            self._last_window_class = app_class
+            self._last_window_pid = pid
+            
+            
+            self._last_window_time = now
+        return self._last_window_title, is_browser(self._last_window_title, getattr(self, "_last_window_class", ""), getattr(self, "_last_window_pid", 0))
+
     def _capture_loop(self) -> None:
         """Main loop for capturing screenshots."""
         with mss.mss(with_cursor=True) as sct:
@@ -51,12 +69,15 @@ class ScreenshotHandler:
                         sct, x, y, max_res=self.max_res, scale=self.scale
                     )
                     if screenshot is not None:
+                        window_title, is_browser_win = self._get_window_info()
                         buffer_image = BufferImage(
                             timestamp=timestamp,
                             data=screenshot,
                             monitor_index=monitor_index,
                             scale_factor=scale_factor,
-                            monitor_dict=monitor_dict
+                            monitor_dict=monitor_dict,
+                            active_window=window_title,
+                            is_browser=is_browser_win
                         )
                         self.image_queue.enqueue(buffer_image)
                 except Exception as e:
