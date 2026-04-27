@@ -124,8 +124,10 @@ class Aggregation:
     screenshot_path: Optional[str]
     events: List[Event]
     monitor: Optional[Dict[str, int]] = None
-    burst_id: Optional[str] = None,
+    burst_id: Optional[str] = None
     scale_factor: float = 1.0
+    active_window: str = ""
+    is_browser: bool = False
 
     @classmethod
     def from_dict(cls, data: Dict) -> Aggregation:
@@ -140,7 +142,9 @@ class Aggregation:
             events=events,
             monitor=data.get('monitor'),
             burst_id=data.get('burst_id'),
-            scale_factor=data.get('scale_factor', 1.0)
+            scale_factor=data.get('scale_factor', 1.0),
+            active_window=data.get('active_window', ''),
+            is_browser=data.get('is_browser', False)
         )
 
     def to_dict(self) -> Dict:
@@ -154,7 +158,9 @@ class Aggregation:
             'events': [e.to_dict() for e in self.events],
             'monitor': self.monitor,
             'burst_id': self.burst_id,
-            'scale_factor': self.scale_factor
+            'scale_factor': self.scale_factor,
+            'active_window': self.active_window,
+            'is_browser': self.is_browser
         }
 
     def _click_to_relative(self, pos, monitor):

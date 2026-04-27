@@ -4,6 +4,7 @@ from pynput import mouse
 from screeninfo import get_monitors
 from napsack.record.models.event import InputEvent, EventType
 from napsack.record.models.event_queue import EventQueue
+from napsack.record.handlers.window import get_active_window_title, is_browser
 
 
 # Valid event types that can be disabled
@@ -59,6 +60,25 @@ class InputEventHandler:
                 print("Accessibility features will be disabled.")
                 self.accessibility_enabled = False
 
+        self._last_window_title = ""
+        self._last_window_time = 0.0
+
+    def _get_window_info(self) -> tuple[str, bool]:
+        now = time.time()
+        # Rate limit to checking at most once per second
+        if now - self._last_window_time > 1.0:
+            title, app_class, pid = get_active_window_title()
+            self._last_window_title = title
+            self._last_window_class = app_class
+            self._last_window_pid = pid
+            
+            
+            self._last_window_time = now
+        else:
+            app_class = getattr(self, '_last_window_class', "")
+            
+        return self._last_window_title, is_browser(self._last_window_title, getattr(self, "_last_window_class", ""), getattr(self, "_last_window_pid", 0))
+
     def _get_monitor(self, x: int, y: int) -> int:
         """
         Get the monitor index for given coordinates.
@@ -103,6 +123,7 @@ class InputEventHandler:
         timestamp = time.time()
         monitor_idx, monitor = self._get_monitor(x, y)
 
+        window_title, is_browser_win = self._get_window_info()
         event = InputEvent(
             timestamp=timestamp,
             monitor_index=monitor_idx,
@@ -111,6 +132,8 @@ class InputEventHandler:
             details={'x': x, 'y': y},
             cursor_position=(x, y)
         )
+        event.details['active_window'] = window_title
+        event.details['is_browser'] = is_browser_win
 
         if self.accessibility_enabled and self.accessibility_handler:
             ax_data = self.accessibility_handler(event)
@@ -135,6 +158,7 @@ class InputEventHandler:
         timestamp = time.time()
         monitor_idx, monitor = self._get_monitor(x, y)
 
+        window_title, is_browser_win = self._get_window_info()
         event = InputEvent(
             timestamp=timestamp,
             monitor_index=monitor_idx,
@@ -147,6 +171,8 @@ class InputEventHandler:
             },
             cursor_position=(x, y)
         )
+        event.details['active_window'] = window_title
+        event.details['is_browser'] = is_browser_win
 
         if self.accessibility_enabled and self.accessibility_handler:
             ax_data = self.accessibility_handler(event)
@@ -171,6 +197,7 @@ class InputEventHandler:
         timestamp = time.time()
         monitor_idx, monitor = self._get_monitor(x, y)
 
+        window_title, is_browser_win = self._get_window_info()
         event = InputEvent(
             timestamp=timestamp,
             monitor_index=monitor_idx,
@@ -184,6 +211,8 @@ class InputEventHandler:
             },
             cursor_position=(x, y)
         )
+        event.details['active_window'] = window_title
+        event.details['is_browser'] = is_browser_win
 
         if self.accessibility_enabled and self.accessibility_handler:
             ax_data = self.accessibility_handler(event)
@@ -214,6 +243,7 @@ class InputEventHandler:
         except AttributeError:
             key_char = str(key)
 
+        window_title, is_browser_win = self._get_window_info()
         event = InputEvent(
             timestamp=timestamp,
             monitor_index=monitor_idx,
@@ -222,6 +252,8 @@ class InputEventHandler:
             details={'key': key_char},
             cursor_position=(x, y)
         )
+        event.details['active_window'] = window_title
+        event.details['is_browser'] = is_browser_win
 
         if self.accessibility_enabled and self.accessibility_handler:
             ax_data = self.accessibility_handler(event)
@@ -252,6 +284,7 @@ class InputEventHandler:
         except AttributeError:
             key_char = str(key)
 
+        window_title, is_browser_win = self._get_window_info()
         event = InputEvent(
             timestamp=timestamp,
             monitor_index=monitor_idx,
@@ -260,6 +293,8 @@ class InputEventHandler:
             details={'key': key_char},
             cursor_position=(x, y)
         )
+        event.details['active_window'] = window_title
+        event.details['is_browser'] = is_browser_win
 
         if self.accessibility_enabled and self.accessibility_handler:
             ax_data = self.accessibility_handler(event)

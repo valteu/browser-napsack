@@ -9,6 +9,8 @@ class BufferImage:
     monitor_index: int = 0
     monitor_dict: dict = None
     scale_factor: float = 1.0
+    active_window: str = ""
+    is_browser: bool = False
 
     def __lt__(self, other):
         return self.timestamp < other.timestamp
@@ -19,5 +21,7 @@ class BufferImage:
             'monitor_index': self.monitor_index,
             'shape': self.data.shape if self.data is not None else None,
             'monitor_dict': self.monitor_dict,
-            'scale_factor': self.scale_factor
+            'scale_factor': self.scale_factor,
+            'active_window': self.active_window,
+            'is_browser': self.is_browser
         }
