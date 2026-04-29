@@ -195,15 +195,23 @@ def get_active_window_title() -> tuple[str, str, int]:
             return buf.value if buf.value else "", "", pid
 
         elif sys.platform == "darwin":
-            script = 'tell application "System Events" to get {name, unix id} of first application process whose frontmost is true'
+            script = 'tell application "System Events"\nset frontApp to first application process whose frontmost is true\nget {name of frontApp, unix id of frontApp}\nend tell'
             proc = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=0.5)
-            output = proc.stdout.strip().split(", ")
-            app_name = output[0] if len(output) > 0 else ""
-            pid = int(output[1]) if len(output) > 1 and output[1].isdigit() else 0
+            
+            app_name = ""
+            pid = 0
+            if proc.returncode == 0:
+                output = proc.stdout.strip().split(", ")
+                app_name = output[0] if len(output) > 0 else ""
+                pid = int(output[1]) if len(output) > 1 and output[1].isdigit() else 0
 
-            script_title = f'tell application "System Events" to tell process "{app_name}" to get name of front window'
-            proc_title = subprocess.run(['osascript', '-e', script_title], capture_output=True, text=True, timeout=0.5)
-            title = proc_title.stdout.strip()
+            title = ""
+            if app_name:
+                script_title = f'tell application "System Events"\ntell process "{app_name}"\nif exists (1st window whose value of attribute "AXMain" is true) then\nget name of 1st window whose value of attribute "AXMain" is true\nelse\nreturn ""\nend if\nend tell\nend tell'
+                proc_title = subprocess.run(['osascript', '-e', script_title], capture_output=True, text=True, timeout=0.5)
+                if proc_title.returncode == 0:
+                    title = proc_title.stdout.strip()
+            
             return title if title else app_name, app_name, pid
 
         elif sys.platform.startswith("linux"):
@@ -221,11 +229,31 @@ def get_active_window_title() -> tuple[str, str, int]:
 def is_browser(title: str, app_class: str, pid: int = 0) -> bool:
     if pid > 0 and is_mirage_browser(pid):
         return True
-    if os.environ.get("MIRAGE_BROWSER_PID"):
-        return False
-
+    
+    # On macOS, multiple instances of Chrome share the same application bundle ID
+    # and osascript reports the PID of the first instance, not the Playwright instance.
+    # Therefore, if the active app is a known browser, we must accept it even if
+    # MIRAGE_BROWSER_PID is set.
     title_lower = title.lower() if title else ""
     class_lower = app_class.lower() if app_class else ""
+
+    is_known_browser = False
+    if class_lower:
+        for browser_class in BROWSER_WM_CLASSES:
+            if browser_class in class_lower:
+                is_known_browser = True
+                break
+
+    if not is_known_browser and title_lower and _browser_title_re.search(title_lower):
+        is_known_browser = True
+    if not is_known_browser and class_lower and _browser_title_re.search(class_lower):
+        is_known_browser = True
+
+    if sys.platform == "darwin" and is_known_browser:
+        return True
+
+    if os.environ.get("MIRAGE_BROWSER_PID"):
+        return False
 
     non_browsers = [
         "gnome-terminal", "konsole", "xterm", "iterm", "alacritty", "kitty",
