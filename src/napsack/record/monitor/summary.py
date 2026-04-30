@@ -340,7 +340,11 @@ def plot_all(events_by_cat, intervals_by_cat, state_markers_by_cat, duplicates_t
 
 
 def plot_summary_stats(directory: Path = Path("."), agg_path: Path = Path("raw_aggregations.jsonl"), events_path: Path = Path("events.jsonl"), summary_path: Path = Path("summary.png")):
-    agg_objs = read_jsonl(agg_path)
+    import matplotlib
+    matplotlib.use("Agg")  # Force headless backend to prevent GUI thread crashing on SIGINT
+    import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+        agg_objs = read_jsonl(agg_path)
     events_objs = read_jsonl(events_path)
 
     if not agg_objs:

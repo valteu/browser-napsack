@@ -3,6 +3,15 @@ import numpy as np
 from typing import Optional, Tuple, Union
 from PIL import Image
 
+# macOS Fallback for mss zero-region bug
+import sys
+if sys.platform == "darwin":
+    try:
+        import Quartz.CoreGraphics as CG
+        import CoreVideo
+    except ImportError:
+        pass
+
 
 def is_active_monitor(mon: dict, x: int, y: int) -> bool:
     """Check if coordinates are within monitor bounds"""
@@ -69,6 +78,31 @@ def _resize_by_scale(img_rgb: np.ndarray, scale: float) -> np.ndarray:
     return np.asarray(pil_resized)
 
 
+def _mac_fallback_capture(monitor_index: int):
+    try:
+        image_ref = CG.CGWindowListCreateImage(
+            CG.CGRectInfinite,
+            CG.kCGWindowListOptionOnScreenOnly,
+            CG.kCGNullWindowID,
+            CG.kCGWindowImageDefault
+        )
+        if not image_ref: return None
+        
+        width = CG.CGImageGetWidth(image_ref)
+        height = CG.CGImageGetHeight(image_ref)
+        
+        data_provider = CG.CGImageGetDataProvider(image_ref)
+        data = CG.CGDataProviderCopyData(data_provider)
+        
+        # Convert to numpy array (BGRA)
+        img_np = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 4))
+        
+        # Convert BGRA to RGB
+        img_rgb = img_np[:, :, [2, 1, 0]]
+        return img_rgb
+    except Exception:
+        return None
+
 def capture_screenshot(
     sct,
     x: int,
@@ -100,10 +134,16 @@ def capture_screenshot(
         monitor = sct.monitors[monitor_index]
 
         time_before = time.time()
-        screenshot = sct.grab(monitor)
-
-        img = np.array(screenshot)
-        img_rgb = img[:, :, [2, 1, 0]]
+        try:
+            screenshot = sct.grab(monitor)
+            img = np.array(screenshot)
+            img_rgb = img[:, :, [2, 1, 0]]
+        except Exception as e:
+            if sys.platform == "darwin":
+                img_rgb = _mac_fallback_capture(monitor_index)
+                if img_rgb is None: raise e
+            else:
+                raise e
 
         scale_factor = 1.0
         h, w = img_rgb.shape[:2]
@@ -132,5 +172,37 @@ def capture_screenshot(
 
         return img_rgb, max(0, monitor_index - 1), time_before, scale_factor, monitor
     except Exception as e:
+        if sys.platform == "darwin":
+            try:
+                import Quartz.CoreGraphics as CG
+                image_ref = CG.CGWindowListCreateImage(
+                    CG.CGRectInfinite,
+                    CG.kCGWindowListOptionOnScreenOnly,
+                    CG.kCGNullWindowID,
+                    CG.kCGWindowImageDefault
+                )
+                if image_ref:
+                    width = CG.CGImageGetWidth(image_ref)
+                    height = CG.CGImageGetHeight(image_ref)
+                    data_provider = CG.CGImageGetDataProvider(image_ref)
+                    data = CG.CGDataProviderCopyData(data_provider)
+                    import numpy as np
+                    bytes_per_row = CG.CGImageGetBytesPerRow(image_ref)
+                    img_np = np.frombuffer(data, dtype=np.uint8).reshape((height, bytes_per_row))
+                    img_np = img_np[:, :width * 4].reshape((height, width, 4))
+                    img_rgb = img_np[:, :, [2, 1, 0]]
+                    
+                    scale_factor = 1.0
+                    if scale is not None and (isinstance(scale, float) and scale < 1.0):
+                        img_rgb = _resize_by_scale(img_rgb, scale)
+                    elif max_res is not None:
+                        img_rgb = _resize_if_needed(img_rgb, max_res)
+                    new_h, new_w = img_rgb.shape[:2]
+                    scale_factor = new_w / width
+                    
+                    return img_rgb, 0, time.time(), scale_factor, {'left': 0, 'top': 0, 'width': width, 'height': height}
+            except Exception as inner_e:
+                print(f"Mac fallback failed: {inner_e}")
+        
         print(f"Error capturing screenshot: {e}")
         return None, None, None, None, None
